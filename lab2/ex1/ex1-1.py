@@ -16,11 +16,11 @@ def gauss_no_pivoting(A, b):
     
     return x
 
-A = np.array([[5, 2.833333, 1],
-              [3, 1.7, 7],
+A = np.array([[5, 3, 1],
+              [3, 1.79999, 7],
               [1, 8, 1]], dtype=np.float32)
 
-b = np.array([11.666666, 13.4, 18], dtype=np.float32)
+b = np.array([12, 13.59998, 18], dtype=np.float32)
 
 # Решение системы
 solution_no_pivoting = gauss_no_pivoting(A.copy(), b.copy())

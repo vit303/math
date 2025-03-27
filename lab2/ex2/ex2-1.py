@@ -1,75 +1,49 @@
 import numpy as np
 
-# Определяем матрицу A и вектор b с повышенной точностью (float64)
-A = np.array([[5, 2.833333, 1],
-              [3, 1.7, 7],
-              [1, 8, 1]], dtype=np.float64)  
+def manual_zeros(shape):
+    if isinstance(shape, int):
+        return [0.0] * shape
+    elif isinstance(shape, tuple) and len(shape) == 2:
+        return [[0.0] * shape[1] for _ in range(shape[0])]
+    else:
+        raise ValueError("Неподдерживаемая форма массива")
 
-b = np.array([11.666666, 13.4, 18], dtype=np.float64) 
-
-max_iter = 10000  # Увеличим максимальное число итераций
-
-def null_approach(A, b, n):
-    """Начальное приближение - решение по диагонали"""
-    return [b[i] / A[i][i] for i in range(n)]
-
-def iteration_process(A, b, max_iter, tol=1e-3):
+def rearrange_rows(A, b):
+    """Переставляет строки матрицы для обеспечения диагонального преобладания"""
     n = len(A)
-    x_prev = null_approach(A, b, n)
-    x_next = [0] * n
-    
+    indices = list(range(n))
+    indices.sort(key=lambda i: abs(A[i][i]) - sum(abs(A[i][j]) for j in range(n) if j != i), reverse=True)
+    A = A[indices]
+    b = b[indices]
+    return A, b
+
+def iterative_method(A, b, tol, max_iter=1000):
+    """Решает СЛАУ методом простых итераций с заданной точностью tol"""
+    n = len(A)
+    x_old = manual_zeros(n)
+    x_new = manual_zeros(n)
     for iteration in range(max_iter):
         for i in range(n):
-            sum_ax = 0
-            for j in range(n):
-                if j != i:
-                    sum_ax += A[i][j] * x_prev[j]
-            x_next[i] = (b[i] - sum_ax) / A[i][i]
+            sum1 = sum(A[i][j] * x_old[j] for j in range(n) if j != i)
+            x_new[i] = (b[i] - sum1) / A[i][i]
         
-        # Проверка условия остановки - норма разности векторов
-        error = max(abs(x_next[i] - x_prev[i]) for i in range(n))
-        if error < tol:
-            print(f"Сошлось за {iteration} итераций")
+        # Проверка критерия остановки (разность норм)
+        if max(abs(x_new[i] - x_old[i]) for i in range(n)) < tol:
             break
-            
-        x_prev = x_next.copy()
-    else:
-        raise ValueError(f"Метод не сошёлся за {max_iter} итераций")
-    
-    return x_next
+        x_old = x_new.copy()
+    return x_new
 
-# Преобразованная система (диагональное преобладание)
-A_modified = np.array([[5, 2.833333, 1],
-                       [1, 8, 1],
-                       [3, 1.7, 7]], dtype=np.float64)
-b_modified = np.array([11.666666, 18, 13.4], dtype=np.float64)
+# Исходные данные
+A = np.array([[5, 3, 1],
+              [3, 1.79999, 7],
+              [1, 8, 1]], dtype=np.float64)
 
-print("\nРешение преобразованной системы с точностью 1e-15:")
-try:
-    res_modified = iteration_process(A_modified, b_modified, max_iter, tol=1e-15)
-    print(res_modified)
-except Exception as e:
-    print(f"Ошибка: {e}")
+b = np.array([12, 13.59998, 18], dtype=np.float64)
 
-# Проверка диагонального преобладания
-def check_diagonal_dominance(A):
-    n = len(A)
-    for i in range(n):
-        row_sum = sum(abs(A[i][j]) for j in range(n) if j != i)
-        if abs(A[i][i]) <= row_sum:
-            return False
-    return True
+# Перестановка строк для обеспечения сходимости
+A, b = rearrange_rows(A, b)
 
-print("\nПроверка диагонального преобладания:")
-print("Исходная матрица:", "удовлетворяет" if check_diagonal_dominance(A) else "не удовлетворяет")
-print("Модифицированная матрица:", "удовлетворяет" if check_diagonal_dominance(A_modified) else "не удовлетворяет")
-
-# Эксперимент с высокой точностью
-print("\nЭксперимент с разной точностью (до 1e-15):")
-tolerances = [1e-3, 1e-6, 1e-9, 1e-12, 1e-15]
-for tol in tolerances:
-    try:
-        res = iteration_process(A_modified, b_modified, max_iter, tol)
-        print(f"Точность {tol:.0e}: Решение {res}")
-    except Exception as e:
-        print(f"Точность {tol:.0e}: Ошибка - {e}")
+# Запуск расчётов с разной точностью
+for precision in [1e-3, 1e-6, 1e-9, 1e-12, 1e-15]:
+    solution = iterative_method(A, b, tol=precision)
+    print(f"Решение при точности {precision}: {solution}")
