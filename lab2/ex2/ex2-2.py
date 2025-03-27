@@ -52,3 +52,7 @@ if not is_diagonally_dominant(A):
 # Решение методом простых итераций
 solution = simple_iteration_method(A, b, tol=1e-3)
 print("Решение:", solution)
+
+for precision in [1e-3, 1e-6, 1e-9, 1e-12, 1e-15]:
+    solution = simple_iteration_method(A, b, tol=precision)
+    print(f"Решение при точности {precision}: {solution}")
