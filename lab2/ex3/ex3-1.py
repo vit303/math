@@ -1,45 +1,58 @@
-import numpy as np
+def thomas_algorithm(a, b, c, d):
+    """
+    Решение СЛАУ с трехдиагональной матрицей методом прогонки (алгоритм Томаса)
+    
+    Параметры:
+    a - нижняя диагональ (под главной), a[0] не используется
+    b - главная диагональ
+    c - верхняя диагональ (над главной), c[-1] не используется
+    d - правые части уравнений
+    
+    Возвращает:
+    x - решение системы
+    """
+    n = len(d)
+    
+    # Создаем временные массивы
+    c_prime = [0] * n
+    d_prime = [0] * n
+    x = [0] * n
+    
+    # Прямой ход прогонки
+    c_prime[0] = c[0] / b[0]
+    d_prime[0] = d[0] / b[0]
+    
+    for i in range(1, n):
+        if i < n - 1:
+            denominator = b[i] - a[i] * c_prime[i-1]
+            c_prime[i] = c[i] / denominator
+        else:
+            denominator = b[i] - a[i] * c_prime[i-1]
+        
+        d_prime[i] = (d[i] - a[i] * d_prime[i-1]) / denominator
+    
+    # Обратный ход прогонки
+    x[-1] = d_prime[-1]
+    for i in range(n-2, -1, -1):
+        x[i] = d_prime[i] - c_prime[i] * x[i+1]
+    
+    return x
 
-class TridiagonalMatrixSolver:
-    def __init__(self, lower_diag, main_diag, upper_diag, rhs):
-        self.lower_diag = lower_diag
-        self.main_diag = main_diag
-        self.upper_diag = upper_diag
-        self.rhs = rhs
-
-    def solve(self):
-        n = len(self.main_diag)
-        # Создаем массивы для хранения промежуточных значений
-        c_prime = np.zeros(n-1)
-        d_prime = np.zeros(n)
-
-        # Прямой проход
-        c_prime[0] = self.upper_diag[0] / self.main_diag[0]
-        d_prime[0] = self.rhs[0] / self.main_diag[0]
-
-        for i in range(1, n):
-            denominator = self.main_diag[i] - self.lower_diag[i-1] * c_prime[i-1]
-            c_prime[i-1] = self.upper_diag[i-1] / denominator
-            d_prime[i] = (self.rhs[i] - self.lower_diag[i-1] * d_prime[i-1]) / denominator
-
-        # Обратный проход
-        x = np.zeros(n)
-        x[-1] = d_prime[-1]
-
-        for i in range(n-2, -1, -1):
-            x[i] = d_prime[i] - c_prime[i] * x[i+1]
-
-        return x
 
 # Пример использования
 if __name__ == "__main__":
-    # Пример трехдиагональной матрицы
-    lower_diag = [1, 1]  # a[i] (нижняя диагональ)
-    main_diag = [4, 4, 4]  # b[i] (главная диагональ)
-    upper_diag = [1, 1]  # c[i] (верхняя диагональ)
-    rhs = [5, 5, 5]  # правая часть
-
-    solver = TridiagonalMatrixSolver(lower_diag, main_diag, upper_diag, rhs)
-    solution = solver.solve()
-
+    # Пример трехдиагональной системы:
+    # 3x1 + 2x2         = 5
+    # 1x1 + 4x2 + 3x3   = 6
+    #      2x2 + 5x3    = 7
+    
+    # Диагонали матрицы (a - нижняя, b - главная, c - верхняя)
+    a = [0, 1, 2]    # a[0] не используется
+    b = [3, 4, 5]
+    c = [2, 3, 0]    # c[-1] не используется
+    
+    # Вектор правой части
+    d = [5, 6, 7]
+    
+    solution = thomas_algorithm(a, b, c, d)
     print("Решение системы:", solution)
